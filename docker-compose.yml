@@ -1,0 +1,106 @@
+version: "3"
+
+services:
+  client_1:
+    container_name: client_cont_1
+    build:
+      context: ./client_1
+      dockerfile: Dockerfile
+    ports:
+      - 3000:3000
+    networks:
+      - vps-network
+    volumes:
+      - ./client_1/src:/usr/app/src
+      - ./client_1/public:/usr/app/public
+    depends_on:
+      - server_1
+    environment:
+      - REACT_APP_SERVER=http://node1.vn:5000
+      - CHOKIDAR_USEPOLLING=true
+    command: npm start
+    stdin_open: true
+    tty: true
+  
+  server_1:
+    container_name: server_cont_1
+    build:
+      context: ./server_1
+      dockerfile: Dockerfile
+    restart: always
+    ports:
+      - 5000:5000
+    networks:
+      - vps-network
+    volumes:
+      - ./server_1:/usr/app
+      - /usr/app/node_modules
+    depends_on:
+      - mongodb
+    environment:
+      - MONGO_URL=mongodb://db:27017
+      - CLIENT=http://localhost:3000
+    command: npm start
+    stdin_open: true
+    tty: true
+
+  client_2:
+    container_name: client_cont_2
+    build:
+      context: ./client_2
+      dockerfile: Dockerfile
+    ports:
+      - 3006:3006
+    networks:
+      - vps-network
+    volumes:
+      - ./client_2/src:/usr/app/src
+      - ./client_2/public:/usr/app/public
+    depends_on:
+      - server_2
+    environment:
+      - REACT_APP_SERVER=http://node2.vn:5006
+      - CHOKIDAR_USEPOLLING=true
+    command: npm start
+    stdin_open: true
+    tty: true
+  
+  server_2:
+    container_name: server_cont_2
+    build:
+      context: ./server_2
+      dockerfile: Dockerfile
+    restart: always
+    ports:
+      - 5006:5006
+    networks:
+      - vps-network
+    volumes:
+      - ./server_2:/usr/app
+      - /usr/app/node_modules
+    depends_on:
+      - mongodb
+    environment:
+      - MONGO_URL=mongodb://db:27017
+      - CLIENT=http://localhost:3006
+    command: npm start
+    stdin_open: true
+    tty: true
+
+  mongodb:
+    container_name: mongodb_cont
+    image: mongo:5.0.6-focal
+    ports:
+      - 27017:27017
+    networks:
+      - vps-network
+    volumes:
+      - mongo-data:/data/db
+
+networks:
+  vps-network:
+    external: true
+
+volumes:
+  mongo-data:
+    driver: local
